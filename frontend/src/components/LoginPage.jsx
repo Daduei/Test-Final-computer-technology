@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import './LoginPage.css'
 
-export default function LoginPage() {
+export default function LoginPage({ onSwitch, onLogin }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -86,6 +86,7 @@ export default function LoginPage() {
             <button
               type="button"
               className="btn btn-register"
+              onClick={() => onSwitch && onSwitch('register')}
             >
               Register
             </button>
