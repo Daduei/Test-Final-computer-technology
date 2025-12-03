@@ -1,4 +1,4 @@
-const API_URL = '/api';
+const API_URL = 'https://Daduei.pythonanywhere.com/api';
 
 const getAuthHeader = () => {
   const token = localStorage.getItem('token');
