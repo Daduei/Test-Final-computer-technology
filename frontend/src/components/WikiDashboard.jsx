@@ -12,6 +12,7 @@ import {
   User,
 } from 'lucide-react'
 import { documentsAPI } from '../services/api'
+import Profile from './Profile'
 import './WikiDashboard.css'
 
 const markdownToHtml = (md) => {
@@ -31,13 +32,56 @@ export default function WikiDashboard({ user, onLogout }) {
   const [editContent, setEditContent] = useState('')
   const [editTitle, setEditTitle] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [viewMode, setViewMode] = useState('view') // "view" | "edit"
+  const [viewMode, setViewMode] = useState('view') // 'view' | 'edit'
   const [loading, setLoading] = useState(true)
 
-  // ===== LOAD DATA =====
+  // View hiện tại: 'dashboard' | 'profile'
+  const [activeView, setActiveView] = useState('dashboard')
+
+  // ===== Name & Avatar hiển thị trên header, lưu theo email =====
+  const [displayName, setDisplayName] = useState(() => {
+    const email = user?.email
+    if (!email) return user.name || ''
+    const key = `name:${email}`
+    const saved = window.localStorage.getItem(key)
+    return saved || user.name || ''
+  })
+
+  const [avatarUrl, setAvatarUrl] = useState(() => {
+    const email = user?.email
+    if (!email) return user.avatarURL || ''
+    const key = `avatar:${email}`
+    const saved = window.localStorage.getItem(key)
+    return saved || user.avatarURL || ''
+  })
+
   useEffect(() => {
     loadDocuments()
   }, [])
+
+  // lưu name vào localStorage khi đổi
+  useEffect(() => {
+    const email = user?.email
+    if (!email) return
+    const key = `name:${email}`
+    if (displayName) {
+      window.localStorage.setItem(key, displayName)
+    } else {
+      window.localStorage.removeItem(key)
+    }
+  }, [displayName, user?.email])
+
+  // lưu avatar vào localStorage khi đổi
+  useEffect(() => {
+    const email = user?.email
+    if (!email) return
+    const key = `avatar:${email}`
+    if (avatarUrl) {
+      window.localStorage.setItem(key, avatarUrl)
+    } else {
+      window.localStorage.removeItem(key)
+    }
+  }, [avatarUrl, user?.email])
 
   const loadDocuments = async () => {
     try {
@@ -55,6 +99,7 @@ export default function WikiDashboard({ user, onLogout }) {
       if (res.success) {
         setSelectedDoc(res.document)
         setViewMode('view')
+        setActiveView('dashboard')
       }
     } catch (e) {
       console.error(e)
@@ -73,6 +118,7 @@ export default function WikiDashboard({ user, onLogout }) {
         setEditTitle(res.document.title)
         setEditContent(res.document.content)
         setViewMode('edit')
+        setActiveView('dashboard')
       }
     } catch (e) {
       alert('Failed to create')
@@ -175,6 +221,12 @@ export default function WikiDashboard({ user, onLogout }) {
     ? getVisibleRevisions(normalizedSelected)
     : []
 
+  // Nhận dữ liệu từ Profile khi bấm Save
+  const handleProfileUpdate = (updatedUser) => {
+    if (updatedUser.name) setDisplayName(updatedUser.name)
+    if (updatedUser.avatarURL) setAvatarUrl(updatedUser.avatarURL)
+  }
+
   if (loading) {
     return (
       <div className="wiki-dashboard wiki-loading">
@@ -188,25 +240,59 @@ export default function WikiDashboard({ user, onLogout }) {
       {/* ============== HEADER ============== */}
       <header className="wiki-header">
         <nav className="wiki-tabs">
-          <button className="tab tab-active">IRONDOC</button>
-          <button className="tab">Manage Doc</button>
+          {/* IRONDOC: luôn pill xanh, click về dashboard */}
+          <button
+            className="tab tab-active"
+            onClick={() => setActiveView('dashboard')}
+          >
+            IRONDOC
+          </button>
+
+          {/* Manage Doc cũng về dashboard */}
+          <button
+            className="tab"
+            onClick={() => setActiveView('dashboard')}
+          >
+            Manage Doc
+          </button>
+
+          {/* Manage User: để sau tuỳ bạn, giờ chỉ là tab trống */}
           <button className="tab">Manage User</button>
         </nav>
 
         <div className="header-right">
-          {/* KHÔNG CÒN SEARCH Ở ĐÂY */}
-          <div className="user-pill">
+          {/* Bấm user-pill => sang Profile */}
+          <div
+            className="user-pill"
+            onClick={() => setActiveView('profile')}
+          >
             <div className="user-avatar">
-              {user.name ? user.name[0] : <User size={12} />}
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="avatar"
+                  className="user-avatar-img"
+                />
+              ) : displayName ? (
+                displayName[0]
+              ) : (
+                <User size={12} />
+              )}
             </div>
             <div className="user-info">
-              <span className="user-name">{user.name}</span>
+              <span className="user-name">{displayName || user.name}</span>
               <span className="user-email">{user.email}</span>
             </div>
             <span className={roleBadgeClass[user.role] || 'user-role'}>
               {user.role}
             </span>
-            <button className="logout-btn" onClick={onLogout}>
+            <button
+              className="logout-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                onLogout()
+              }}
+            >
               <LogOut size={14} />
             </button>
           </div>
@@ -215,224 +301,246 @@ export default function WikiDashboard({ user, onLogout }) {
 
       {/* ============== MAIN ============== */}
       <main className="wiki-main">
-        {/* --------- BOARD TRÊN --------- */}
-        <section className="wiki-card wiki-board">
-          <div className="board-top">
-            {/* SEARCH Ở ĐÂY – GIỮ LẠI */}
-            <div className="board-search-wrapper">
-              <Search className="board-search-icon" size={16} />
-              <input
-                className="board-search-input"
-                placeholder="Search documents..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            {canCreate() && (
-              <button className="create-btn" onClick={createDocument}>
-                <Plus size={16} /> <span>Create</span>
-              </button>
-            )}
-          </div>
-
-          <div className="wiki-doc-grid">
-            {filteredDocs.length === 0 ? (
-              <div className="wiki-doc-empty">No documents found</div>
-            ) : (
-              filteredDocs.map((doc) => {
-                const d = doc
-                const selected = normalizedSelected?._id === d._id
-
-                return (
-                  <div
-                    key={d._id}
-                    className={`wiki-doc-card ${selected ? 'active' : ''}`}
-                    onClick={() => loadDocument(d._id)} // click card -> panel dưới
-                  >
-                    <div className="doc-card-header">
-                      <div>
-                        <div className="doc-label">Name</div>
-                        <p className="doc-title">{d.title}</p>
-                      </div>
-                      {canDelete(d) && (
-                        <button
-                          className="doc-delete-btn"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            deleteDocument(d._id)
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="doc-desc-block">
-                      <div className="doc-label">Description</div>
-                      <p className="doc-desc">
-                        {(d.content || '').slice(0, 90) ||
-                          'No description yet.'}
-                      </p>
-                    </div>
-
-                    <div className="doc-info">
-                      <p>
-                        <span className="info-label">Owner: </span>
-                        {d.ownerName || '—'}
-                      </p>
-                      <p>
-                        <span className="info-label">Updated: </span>
-                        {d.updatedAt
-                          ? new Date(d.updatedAt).toLocaleDateString()
-                          : '—'}
-                      </p>
-                      <p>
-                        <span className="info-label">Date create: </span>
-                        {d.createdAt
-                          ? new Date(d.createdAt).toLocaleDateString()
-                          : '—'}
-                      </p>
-                    </div>
-
-                    {/* KHÔNG CÓ NÚT EDIT TRONG CARD */}
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </section>
-
-        {/* --------- PANEL DƯỚI --------- */}
-        {normalizedSelected ? (
-          <section className="wiki-card wiki-edit-section">
-            {/* LEFT: FORM EDIT */}
-            <div className="edit-left">
-              <div className="edit-header">
-                <div className="edit-header-left">
-                  <span className="edit-chip">EDIT</span>
-                  <span className="edit-title-text">
-                    {normalizedSelected.title}
-                  </span>
-                </div>
-
-                {/* NÚT EDIT CHỈ Ở ĐÂY */}
-                {canEdit(normalizedSelected) && viewMode === 'view' && (
-                  <button
-                    className="edit-header-btn"
-                    onClick={() => {
-                      setEditTitle(normalizedSelected.title || '')
-                      setEditContent(normalizedSelected.content || '')
-                      setViewMode('edit')
-                    }}
-                  >
-                    <Edit2 size={14} /> Edit
-                  </button>
-                )}
-              </div>
-
-              <div className="edit-field">
-                <label className="edit-label">Name</label>
-                {viewMode === 'edit' ? (
-                  <input
-                    className="edit-input"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                  />
-                ) : (
-                  <div className="edit-view">{normalizedSelected.title}</div>
-                )}
-              </div>
-
-              <div className="edit-field edit-field-flex">
-                <label className="edit-label">Description</label>
-                {viewMode === 'edit' ? (
-                  <textarea
-                    className="edit-textarea"
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                  />
-                ) : (
-                  <div
-                    className="edit-view edit-view-content"
-                    dangerouslySetInnerHTML={{
-                      __html: markdownToHtml(
-                        normalizedSelected.content || ''
-                      ),
-                    }}
-                  />
-                )}
-              </div>
-
-              {viewMode === 'edit' && canEdit(normalizedSelected) && (
-                <div className="edit-actions">
-                  <button className="btn-save" onClick={updateDocument}>
-                    <Save size={14} /> Save
-                  </button>
-                  <button
-                    className="btn-cancel"
-                    onClick={() => setViewMode('view')}
-                  >
-                    <X size={14} /> Cancel
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* RIGHT: HISTORY – tuỳ role */}
-            {user.role !== 'viewer' && (
-              <aside className="edit-history">
-                <div className="history-header">
-                  <div className="history-title">
-                    <Clock size={12} style={{ marginRight: 4 }} />
-                    VERSION HISTORY
-                  </div>
-                  <div className="history-subtitle">
-                    {normalizedSelected.ownerName || 'Editor'}
-                  </div>
-                </div>
-
-                <div className="history-list">
-                  {visibleRevisions.length === 0 ? (
-                    <div className="history-item-meta">
-                      No visible revisions.
-                    </div>
-                  ) : (
-                    [...visibleRevisions].reverse().map((rev) => (
-                      <div className="history-item" key={rev._id}>
-                        <div className="history-item-title">
-                          {rev.changes || 'Updated document'}{' '}
-                          {rev._id === latestRevisionId && (
-                            <span className="history-current">(Current)</span>
-                          )}
-                        </div>
-                        <div className="history-item-meta">
-                          {rev.authorName || 'Unknown'} •{' '}
-                          {new Date(rev.createdAt).toLocaleString()}
-                        </div>
-                        {rev._id !== latestRevisionId &&
-                          canEdit(normalizedSelected) && (
-                            <button
-                              className="history-restore-btn"
-                              onClick={() => restoreRevision(rev._id)}
-                            >
-                              Restore
-                            </button>
-                          )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </aside>
-            )}
+        {activeView === 'profile' ? (
+          // ===== PROFILE VIEW =====
+          <section className="wiki-card profile-section">
+            <Profile
+              user={{
+                ...user,
+                name: displayName || user.name,
+                avatarURL: avatarUrl,
+              }}
+              onUpdateProfile={handleProfileUpdate}
+            />
           </section>
         ) : (
-          <section className="wiki-card wiki-empty-section">
-            <div className="empty-inner">
-              <FileText size={40} />
-              <p>Select a document card above to view or edit.</p>
-            </div>
-          </section>
+          // ===== DASHBOARD VIEW =====
+          <>
+            {/* BOARD TRÊN: search + create + doc cards */}
+            <section className="wiki-card wiki-board">
+              <div className="board-top">
+                <div className="board-search-wrapper">
+                  <Search className="board-search-icon" size={16} />
+                  <input
+                    className="board-search-input"
+                    placeholder="Search documents..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                {canCreate() && (
+                  <button className="create-btn" onClick={createDocument}>
+                    <Plus size={16} /> <span>Create</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="wiki-doc-grid">
+                {filteredDocs.length === 0 ? (
+                  <div className="wiki-doc-empty">No documents found</div>
+                ) : (
+                  filteredDocs.map((doc) => {
+                    const d = doc
+                    const selected = normalizedSelected?._id === d._id
+
+                    return (
+                      <div
+                        key={d._id}
+                        className={`wiki-doc-card ${
+                          selected ? 'active' : ''
+                        }`}
+                        onClick={() => loadDocument(d._id)}
+                      >
+                        <div className="doc-card-header">
+                          <div>
+                            <div className="doc-label">Name</div>
+                            <p className="doc-title">{d.title}</p>
+                          </div>
+                          {canDelete(d) && (
+                            <button
+                              className="doc-delete-btn"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                deleteDocument(d._id)
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="doc-desc-block">
+                          <div className="doc-label">Description</div>
+                          <p className="doc-desc">
+                            {(d.content || '').slice(0, 90) ||
+                              'No description yet.'}
+                          </p>
+                        </div>
+
+                        <div className="doc-info">
+                          <p>
+                            <span className="info-label">Owner: </span>
+                            {d.ownerName || '—'}
+                          </p>
+                          <p>
+                            <span className="info-label">Updated: </span>
+                            {d.updatedAt
+                              ? new Date(d.updatedAt).toLocaleDateString()
+                              : '—'}
+                          </p>
+                          <p>
+                            <span className="info-label">
+                              Date create:{' '}
+                            </span>
+                            {d.createdAt
+                              ? new Date(d.createdAt).toLocaleDateString()
+                              : '—'}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </section>
+
+            {/* PANEL DƯỚI: view / edit document + history */}
+            {normalizedSelected ? (
+              <section className="wiki-card wiki-edit-section">
+                <div className="edit-left">
+                  <div className="edit-header">
+                    <div className="edit-header-left">
+                      <span className="edit-chip">EDIT</span>
+                      <span className="edit-title-text">
+                        {normalizedSelected.title}
+                      </span>
+                    </div>
+
+                    {canEdit(normalizedSelected) && viewMode === 'view' && (
+                      <button
+                        className="edit-header-btn"
+                        onClick={() => {
+                          setEditTitle(normalizedSelected.title || '')
+                          setEditContent(normalizedSelected.content || '')
+                          setViewMode('edit')
+                        }}
+                      >
+                        <Edit2 size={14} /> Edit
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="edit-field">
+                    <label className="edit-label">Name</label>
+                    {viewMode === 'edit' ? (
+                      <input
+                        className="edit-input"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                      />
+                    ) : (
+                      <div className="edit-view">
+                        {normalizedSelected.title}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="edit-field edit-field-flex">
+                    <label className="edit-label">Description</label>
+                    {viewMode === 'edit' ? (
+                      <textarea
+                        className="edit-textarea"
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                      />
+                    ) : (
+                      <div
+                        className="edit-view edit-view-content"
+                        dangerouslySetInnerHTML={{
+                          __html: markdownToHtml(
+                            normalizedSelected.content || ''
+                          ),
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  {viewMode === 'edit' && canEdit(normalizedSelected) && (
+                    <div className="edit-actions">
+                      <button className="btn-save" onClick={updateDocument}>
+                        <Save size={14} /> Save
+                      </button>
+                      <button
+                        className="btn-cancel"
+                        onClick={() => setViewMode('view')}
+                      >
+                        <X size={14} /> Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* History: admin xem hết, editor xem lịch sử của mình, viewer không thấy */}
+                {user.role !== 'viewer' && (
+                  <aside className="edit-history">
+                    <div className="history-header">
+                      <div className="history-title">
+                        <Clock size={12} style={{ marginRight: 4 }} />
+                        VERSION HISTORY
+                      </div>
+                      <div className="history-subtitle">
+                        {normalizedSelected.ownerName || 'Editor'}
+                      </div>
+                    </div>
+
+                    <div className="history-list">
+                      {visibleRevisions.length === 0 ? (
+                        <div className="history-item-meta">
+                          No visible revisions.
+                        </div>
+                      ) : (
+                        [...visibleRevisions].reverse().map((rev) => (
+                          <div className="history-item" key={rev._id}>
+                            <div className="history-item-title">
+                              {rev.changes || 'Updated document'}{' '}
+                              {rev._id === latestRevisionId && (
+                                <span className="history-current">
+                                  (Current)
+                                </span>
+                              )}
+                            </div>
+                            <div className="history-item-meta">
+                              {rev.authorName || 'Unknown'} •{' '}
+                              {new Date(
+                                rev.createdAt
+                              ).toLocaleString()}
+                            </div>
+                            {rev._id !== latestRevisionId &&
+                              canEdit(normalizedSelected) && (
+                                <button
+                                  className="history-restore-btn"
+                                  onClick={() => restoreRevision(rev._id)}
+                                >
+                                  Restore
+                                </button>
+                              )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </aside>
+                )}
+              </section>
+            ) : (
+              <section className="wiki-card wiki-empty-section">
+                <div className="empty-inner">
+                  <FileText size={40} />
+                  <p>Select a document card above to view or edit.</p>
+                </div>
+              </section>
+            )}
+          </>
         )}
       </main>
     </div>
