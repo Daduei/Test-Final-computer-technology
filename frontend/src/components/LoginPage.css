@@ -39,6 +39,9 @@
   margin-top: 5rem;
   position: relative;
   z-index: 2;
+  /* Use the same system font stack as the rest of the app so the
+     header matches the email/password field fonts */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Header */
@@ -52,6 +55,7 @@
   font-weight: 700;
   color: #000000;
   margin: 0;
+  font-family: inherit; /* ensure header uses same font as inputs */
 }
 
 /* Error Message */

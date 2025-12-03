@@ -11,14 +11,24 @@ const roleBadgeClass = {
 
 const UserRow = ({ u }) => {
   const avatar = u.avatarURL || u.avatarUrl || u.avatar || '';
+  const [imgOk, setImgOk] = useState(false);
+  const initial = u.name ? u.name.trim()[0] : '?';
+
   return (
     <div className="user-row">
       <div className="user-left">
-        {avatar ? (
-          <img src={avatar} alt="avatar" className="avatar-img" />
-        ) : (
-          <div className="avatar-pill">{u.name ? u.name[0] : '?'}</div>
-        )}
+        <div className="avatar-wrap">
+          {avatar && (
+            <img
+              src={avatar}
+              alt="avatar"
+              className="avatar-img"
+              onLoad={() => setImgOk(true)}
+              onError={(e) => { setImgOk(false); e.currentTarget.style.display = 'none'; }}
+            />
+          )}
+          {!imgOk && <div className="avatar-pill">{initial}</div>}
+        </div>
 
         <div className="user-meta">
           <div className="user-name">{u.name || '—'}</div>
