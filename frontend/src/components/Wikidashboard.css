@@ -618,6 +618,13 @@
   transition: height 0.08s ease;
 }
 
+/* Ensure description/editor text uses same system font as inputs */
+.rich-edit,
+.edit-view,
+.doc-desc {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
 /* When the editor is empty, show a subtle placeholder and a blue border */
 .rich-edit.rich-empty {
   border-color: #0ea5e9; /* stronger blue when empty to make it visible */
