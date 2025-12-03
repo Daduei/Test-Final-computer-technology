@@ -67,6 +67,28 @@
 }
 
 .tab-active {
+  /* Active tabs now only change text appearance; underline is handled
+     by the ::after pseudo-element so the tab keeps its normal shape. */
+  color: #0369a1;
+  font-weight: 600;
+  position: relative;
+}
+
+/* Add a subtle blue underline indicator for active tabs */
+.tab.tab-active:not(.tab-brand)::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: -6px;
+  height: 3px;
+  background: #0ea5e9;
+  border-radius: 4px;
+}
+
+/* Brand tab (IRONDOC) retains a pill-style look */
+.tab-brand {
+  position: relative;
   border-color: #38bdf8;
   background: #f0f9ff;
   color: #0369a1;
@@ -595,6 +617,30 @@
   overflow: visible;
   transition: height 0.08s ease;
 }
+
+/* When the editor is empty, show a subtle placeholder and a blue border */
+.rich-edit.rich-empty {
+  border-color: #0ea5e9; /* stronger blue when empty to make it visible */
+  background: #fff;
+}
+.rich-edit.rich-empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  display: block;
+  pointer-events: none;
+}
+
+/* Normalize heading sizes inside the rich editor so inserted Markdown
+   headings (h1/h2/h3) don't become huge while editing. Keep styling
+   visually consistent with the edit textarea. */
+.rich-edit h1,
+.rich-edit h2,
+.rich-edit h3 {
+  font-size: 13px; /* same as normal edit text */
+  font-weight: 600; /* keep a modest emphasis but not huge */
+  margin: 0 0 0.5em 0;
+}
+.rich-edit p { margin: 0 0 0.5em 0; }
 
 /* view mode */
 

@@ -111,7 +111,7 @@ export default function WikiDashboard({ user, onLogout }) {
     try {
       const res = await documentsAPI.create(
         'New Document',
-        '# New Document\n\nStart writing...'
+        'Start writing...'
       )
       if (res.success) {
         await loadDocuments()
@@ -198,6 +198,24 @@ export default function WikiDashboard({ user, onLogout }) {
     }
   }, [viewMode, editContent])
 
+  // Keep the editor's innerHTML in sync only when necessary. We avoid
+  // setting `dangerouslySetInnerHTML` on every render because that
+  // resets the caret position while typing. Instead, only update the
+  // DOM when the editor is presented or when external `editContent`
+  // changes (e.g. loading a document).
+  useEffect(() => {
+    if (viewMode === 'edit' && editorRef.current) {
+      const cur = editorRef.current
+      if (cur.innerHTML !== editContent) {
+        cur.innerHTML = editContent
+      }
+      adjustEditorHeight(cur)
+    }
+    // We intentionally depend on `editContent` so external updates
+    // are applied. On user typing, `onInput` updates `editContent`
+    // to match `innerHTML`, so this effect will not overwrite it.
+  }, [viewMode, editContent])
+
   // ===== PERMISSIONS =====
   const canEdit = (doc) =>
     user.role === 'admin' || doc?.ownerEmail === user.email
@@ -273,7 +291,7 @@ export default function WikiDashboard({ user, onLogout }) {
         <nav className="wiki-tabs">
           {/* IRONDOC: luôn pill xanh, click về dashboard */}
           <button
-            className="tab tab-active"
+            className="tab tab-brand"
             onClick={() => setActiveView('dashboard')}
           >
             IRONDOC
@@ -281,7 +299,7 @@ export default function WikiDashboard({ user, onLogout }) {
 
           {/* Manage Doc cũng về dashboard */}
           <button
-            className="tab"
+            className={`tab ${activeView === 'dashboard' ? 'tab-active' : ''}`}
             onClick={() => setActiveView('dashboard')}
           >
             Manage Doc
@@ -289,7 +307,7 @@ export default function WikiDashboard({ user, onLogout }) {
 
           {/* User List (admin only) */}
           {user?.role === 'admin' && (
-            <button className="tab" onClick={() => setActiveView('userlist')}>User List</button>
+            <button className={`tab ${activeView === 'userlist' ? 'tab-active' : ''}`} onClick={() => setActiveView('userlist')}>User List</button>
           )}
         </nav>
 
@@ -507,14 +525,14 @@ export default function WikiDashboard({ user, onLogout }) {
 
                         <div
                           ref={editorRef}
-                          className="rich-edit edit-textarea"
+                          className={`rich-edit edit-textarea ${(!editContent || editContent === '<br>' ) ? 'rich-empty' : ''}`}
+                          data-placeholder="Start writing..."
                           contentEditable
                           suppressContentEditableWarning
                           onInput={(e) => {
                             setEditContent(e.currentTarget.innerHTML)
                             adjustEditorHeight(e.currentTarget)
                           }}
-                          dangerouslySetInnerHTML={{ __html: editContent }}
                         />
                       </>
                     ) : (
