@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Search } from 'lucide-react';
 import { usersAPI } from '../services/api';
 import './userlist.css';
 
@@ -36,6 +37,7 @@ export default function UserList({ currentUser }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -53,18 +55,6 @@ export default function UserList({ currentUser }) {
             return '';
           }
         };
-
-        // If backend returned some users, make sure to attach local avatar
-        // values when available and ensure currentUser is included.
-        if (Array.isArray(fetched) && fetched.length > 0) {
-          for (let i = 0; i < fetched.length; i++) {
-            const email = fetched[i].email;
-            if (!fetched[i].avatarURL && email) {
-              const a = getLocalAvatar(email);
-              if (a) fetched[i].avatarURL = a;
-            }
-          }
-        }
 
         if (currentUser && currentUser.email) {
           const existsIndex = fetched.findIndex((u) => (u.email || '').toLowerCase() === currentUser.email.toLowerCase());
@@ -118,6 +108,17 @@ export default function UserList({ currentUser }) {
   const editors = users.filter((u) => u.role === 'editor');
   const viewers = users.filter((u) => u.role === 'viewer');
 
+  // apply search filter
+  const matches = (u) => {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    return (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q) || (u.role || '').toLowerCase().includes(q);
+  };
+
+  const adminsFiltered = admins.filter(matches);
+  const editorsFiltered = editors.filter(matches);
+  const viewersFiltered = viewers.filter(matches);
+
   return (
     <div className="userlist-card wiki-card">
       <div className="userlist-header">
@@ -125,14 +126,25 @@ export default function UserList({ currentUser }) {
         {error && <div className="userlist-error">{error}</div>}
       </div>
 
+      <div className="userlist-search-wrapper">
+        <Search className="userlist-search-icon" size={16} />
+        <input
+          className="userlist-search-input"
+          type="search"
+          placeholder="Search users..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
       <div className="userlist-section">
         <h4>Admins</h4>
         {loading ? (
           <div className="userlist-loading">Loading…</div>
-        ) : admins.length === 0 ? (
+        ) : adminsFiltered.length === 0 ? (
           <div className="userlist-empty">No admins found</div>
         ) : (
-          admins.map((u) => <UserRow key={u.id || u.email} u={u} />)
+          adminsFiltered.map((u) => <UserRow key={u.id || u.email} u={u} />)
         )}
       </div>
 
@@ -140,10 +152,10 @@ export default function UserList({ currentUser }) {
         <h4>Editors</h4>
         {loading ? (
           <div className="userlist-loading">Loading…</div>
-        ) : editors.length === 0 ? (
+        ) : editorsFiltered.length === 0 ? (
           <div className="userlist-empty">No editors found</div>
         ) : (
-          editors.map((u) => <UserRow key={u.id || u.email} u={u} />)
+          editorsFiltered.map((u) => <UserRow key={u.id || u.email} u={u} />)
         )}
       </div>
 
@@ -151,10 +163,10 @@ export default function UserList({ currentUser }) {
         <h4>Viewers</h4>
         {loading ? (
           <div className="userlist-loading">Loading…</div>
-        ) : viewers.length === 0 ? (
+        ) : viewersFiltered.length === 0 ? (
           <div className="userlist-empty">No viewers found</div>
         ) : (
-          viewers.map((u) => <UserRow key={u.id || u.email} u={u} />)
+          viewersFiltered.map((u) => <UserRow key={u.id || u.email} u={u} />)
         )}
       </div>
     </div>

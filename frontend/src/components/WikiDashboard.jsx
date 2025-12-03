@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Search,
   Plus,
@@ -117,7 +117,8 @@ export default function WikiDashboard({ user, onLogout }) {
         await loadDocuments()
         setSelectedDoc(res.document)
         setEditTitle(res.document.title)
-        setEditContent(res.document.content)
+        // convert existing markdown to HTML for the contenteditable editor
+        setEditContent(markdownToHtml(res.document.content || ''))
         setViewMode('edit')
         setActiveView('dashboard')
       }
@@ -167,6 +168,35 @@ export default function WikiDashboard({ user, onLogout }) {
       alert('Failed to restore')
     }
   }
+
+  // ref for the editable content area and simple formatting helper
+  const editorRef = useRef(null)
+
+  const applyFormat = (cmd, value) => {
+    try {
+      document.execCommand(cmd, false, value)
+      if (editorRef.current) setEditContent(editorRef.current.innerHTML)
+    } catch (e) {
+      console.warn('Formatting failed', e)
+    }
+  }
+
+  // adjust editor height to fit content (auto-resize)
+  const adjustEditorHeight = (el) => {
+    if (!el) return
+    // reset height to measure scrollHeight correctly
+    el.style.height = 'auto'
+    // add small padding to avoid cropping
+    const newH = el.scrollHeight + 6
+    el.style.height = `${newH}px`
+  }
+
+  // when switching to edit mode or content changes, ensure editor height updates
+  useEffect(() => {
+    if (viewMode === 'edit' && editorRef.current) {
+      adjustEditorHeight(editorRef.current)
+    }
+  }, [viewMode, editContent])
 
   // ===== PERMISSIONS =====
   const canEdit = (doc) =>
@@ -429,7 +459,8 @@ export default function WikiDashboard({ user, onLogout }) {
                         className="edit-header-btn"
                         onClick={() => {
                           setEditTitle(normalizedSelected.title || '')
-                          setEditContent(normalizedSelected.content || '')
+                          // convert existing markdown to HTML for the editor
+                          setEditContent(markdownToHtml(normalizedSelected.content || ''))
                           setViewMode('edit')
                         }}
                       >
@@ -456,11 +487,36 @@ export default function WikiDashboard({ user, onLogout }) {
                   <div className="edit-field edit-field-flex">
                     <label className="edit-label">Description</label>
                     {viewMode === 'edit' ? (
-                      <textarea
-                        className="edit-textarea"
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                      />
+                      <>
+                        <div className="rich-toolbar">
+                          <button type="button" onClick={() => applyFormat('bold')} title="Bold"><strong>B</strong></button>
+                          <button type="button" onClick={() => applyFormat('italic')} title="Italic"><em>I</em></button>
+                          <button type="button" onClick={() => applyFormat('insertUnorderedList')} title="Bullet">• List</button>
+                          <button type="button" onClick={() => applyFormat('insertOrderedList')} title="Numbered">1. List</button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const url = prompt('Enter URL (https://...)')
+                              if (url) applyFormat('createLink', url)
+                            }}
+                            title="Link"
+                          >
+                            🔗
+                          </button>
+                        </div>
+
+                        <div
+                          ref={editorRef}
+                          className="rich-edit edit-textarea"
+                          contentEditable
+                          suppressContentEditableWarning
+                          onInput={(e) => {
+                            setEditContent(e.currentTarget.innerHTML)
+                            adjustEditorHeight(e.currentTarget)
+                          }}
+                          dangerouslySetInnerHTML={{ __html: editContent }}
+                        />
+                      </>
                     ) : (
                       <div
                         className="edit-view edit-view-content"
