@@ -50,11 +50,22 @@ export default function UserList({ currentUser }) {
         const getLocalAvatar = (email) => {
           try {
             if (!email) return '';
-            return window.localStorage.getItem(`avatar:${email}`) || '';
+            const key = `avatar:${email}`;
+            const keyLower = `avatar:${(email || '').toLowerCase()}`;
+            return window.localStorage.getItem(key) || window.localStorage.getItem(keyLower) || '';
           } catch (e) {
             return '';
           }
         };
+
+        // Attach any local avatars (from localStorage) to fetched users so
+        // local edits show even if backend doesn't have an avatar URL.
+        fetched.forEach((u) => {
+          if (!u.avatarURL && u.email) {
+            const local = getLocalAvatar(u.email);
+            if (local) u.avatarURL = local;
+          }
+        });
 
         if (currentUser && currentUser.email) {
           const existsIndex = fetched.findIndex((u) => (u.email || '').toLowerCase() === currentUser.email.toLowerCase());
