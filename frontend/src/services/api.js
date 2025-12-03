@@ -24,13 +24,27 @@ export const authAPI = {
     const data = await apiCall('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password, role }) });
     try { console.log('[authAPI] register response', data) } catch (e) {}
     if (data && data.token) localStorage.setItem('token', data.token);
-    return data;
+    // Normalize response: ensure it always has user, success fields
+    return {
+      success: !!data.user || !!data.token,
+      user: data.user,
+      message: data.message,
+      token: data.token,
+      ...data
+    };
   },
   login: async (email, password) => {
     const data = await apiCall('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
     try { console.log('[authAPI] login response', data) } catch (e) {}
     if (data && data.token) localStorage.setItem('token', data.token);
-    return data;
+    // Normalize response: ensure it always has user, success fields
+    return {
+      success: !!data.user || !!data.token,
+      user: data.user,
+      message: data.message,
+      token: data.token,
+      ...data
+    };
   },
   getMe: () => apiCall('/auth/me'),
   logout: () => localStorage.removeItem('token'),

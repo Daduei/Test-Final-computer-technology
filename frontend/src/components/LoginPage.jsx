@@ -1,12 +1,16 @@
 import { useState } from 'react'
-import { FileText, Mail, Lock, LogIn } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { authAPI } from '../services/api'
+import WikiDashboard from './WikiDashboard'
+import './LoginPage.css'
 
 export default function LoginPage({ onSwitch, onLogin }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loggedInUser, setLoggedInUser] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -14,47 +18,113 @@ export default function LoginPage({ onSwitch, onLogin }) {
     setLoading(true)
     try {
       const res = await authAPI.login(email, password)
-      if (res.success) onLogin(res.user)
-    } catch (err) { setError(err.message) }
-    setLoading(false)
+      if (res.success) {
+        // Get full user info from API
+        const userRes = await authAPI.getMe()
+        const user = userRes.user || res.user
+        
+        // Save token and user to localStorage
+        if (res.token) {
+          localStorage.setItem('token', res.token)
+        }
+        localStorage.setItem('user', JSON.stringify(user))
+        
+        // Set logged in user để hiển thị Dashboard
+        setLoggedInUser(user)
+        
+        // Call onLogin callback nếu có
+        if (onLogin) {
+          onLogin(user)
+        }
+      } else {
+        setError(res.message || 'Login failed')
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLogout = () => {
+    setLoggedInUser(null)
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+  }
+
+  // Nếu đã login thành công, hiển thị Dashboard
+  if (loggedInUser) {
+    return <WikiDashboard user={loggedInUser} onLogout={handleLogout} />
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FileText className="text-white" size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800">Wiki web</h1>
-          <p className="text-gray-500 mt-2">Sign in to your account</p>
+    <div className="login-container">
+      {/* Login Box */}
+      <div className="login-box">
+        {/* Title */}
+        <div className="login-header">
+          <h1>Log in</h1>
         </div>
-        {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="you@example.com" />
+
+        {/* Error Message */}
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
+        {/* Form */}
+        <div className="login-form">
+          {/* User name Field */}
+          <div className="form-group">
+            <label>Email</label>
+            <input
+  type="text"
+  value={email}
+  onChange={e => setEmail(e.target.value)}
+  placeholder="Enter your email"
+/>
+          </div>
+
+          {/* Password Field */}
+          <div className="form-group">
+            <label>Password</label>
+            <div className="password-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="form-input password-input"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="password-toggle"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" />
-            </div>
+
+          {/* Buttons */}
+          <div className="button-group">
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="btn btn-login"
+            >
+              {loading ? 'Loading...' : 'Log in'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-register"
+              onClick={() => onSwitch && onSwitch('register')}
+            >
+              Register
+            </button>
           </div>
-          <button type="submit" disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 font-medium disabled:opacity-50">
-            {loading ? 'Signing in...' : <><LogIn size={18} /> Sign In</>}
-          </button>
-        </form>
-        <p className="mt-6 text-center text-gray-600">
-          Don't have an account? <button onClick={onSwitch} className="text-blue-600 hover:underline font-medium">Register</button>
-        </p>
+        </div>
       </div>
     </div>
   )
