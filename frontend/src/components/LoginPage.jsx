@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
+import { authAPI } from '../services/api'
+import WikiDashboard from './WikiDashboard'
 import './LoginPage.css'
 
 export default function LoginPage({ onSwitch, onLogin }) {
@@ -8,19 +10,51 @@ export default function LoginPage({ onSwitch, onLogin }) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loggedInUser, setLoggedInUser] = useState(null)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
-    setTimeout(() => {
-      if (email && password) {
-        alert('Login successful!')
+    try {
+      const res = await authAPI.login(email, password)
+      if (res.success) {
+        // Get full user info from API
+        const userRes = await authAPI.getMe()
+        const user = userRes.user || res.user
+        
+        // Save token and user to localStorage
+        if (res.token) {
+          localStorage.setItem('token', res.token)
+        }
+        localStorage.setItem('user', JSON.stringify(user))
+        
+        // Set logged in user để hiển thị Dashboard
+        setLoggedInUser(user)
+        
+        // Call onLogin callback nếu có
+        if (onLogin) {
+          onLogin(user)
+        }
       } else {
-        setError('Please enter valid credentials')
+        setError(res.message || 'Login failed')
       }
+    } catch (err) {
+      setError(err.message || 'An error occurred')
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
+  }
+
+  const handleLogout = () => {
+    setLoggedInUser(null)
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+  }
+
+  // Nếu đã login thành công, hiển thị Dashboard
+  if (loggedInUser) {
+    return <WikiDashboard user={loggedInUser} onLogout={handleLogout} />
   }
 
   return (
@@ -43,14 +77,13 @@ export default function LoginPage({ onSwitch, onLogin }) {
         <div className="login-form">
           {/* User name Field */}
           <div className="form-group">
-            <label>User name</label>
+            <label>Email</label>
             <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="Enter your user name"
-              className="form-input"
-            />
+  type="text"
+  value={email}
+  onChange={e => setEmail(e.target.value)}
+  placeholder="Enter your email"
+/>
           </div>
 
           {/* Password Field */}

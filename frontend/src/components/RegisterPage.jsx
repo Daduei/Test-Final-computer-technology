@@ -26,7 +26,11 @@ export default function RegisterPage({ onSwitch, onLogin }) {
     setLoading(true)
     try {
       const res = await authAPI.register(name.trim(), email, password, role)
-      if (res.success) onLogin(res.user)
+      if (res.success) {
+        // After successful registration, switch back to login view
+        // User will need to log in with their new credentials
+        onSwitch()
+      }
     } catch (err) { setError(err.message) }
     setLoading(false)
   }
