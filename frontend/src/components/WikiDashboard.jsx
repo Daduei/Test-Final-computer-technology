@@ -14,7 +14,7 @@ import {
 import { documentsAPI } from '../services/api'
 import Profile from './Profile'
 import UserList from './UserList'
-import './WikiDashboard.css'
+import './Wikidashboard.css'
 
 const markdownToHtml = (md) => {
   if (!md) return ''
