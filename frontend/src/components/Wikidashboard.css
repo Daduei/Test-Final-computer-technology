@@ -122,6 +122,9 @@
   border-radius: 999px;
   border: 1px solid #bae6fd;
   padding: 4px 10px;
+  /* keep pill from stretching the header; allow content to shrink */
+  max-width: 420px;
+  min-width: 0;
 }
 
 .user-avatar {
@@ -141,18 +144,29 @@
   display: flex;
   flex-direction: column;
   line-height: 1.1;
+  flex: 1 1 auto;
+  min-width: 0; /* enable text truncation inside flex items */
 }
 
 .user-name {
   font-size: 12px;
   font-weight: 600;
   color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-email {
   font-size: 10px;
   color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* ensure role badge doesn't shrink and stays visible */
+.user-pill .user-role { flex: 0 0 auto; margin-left: 8px; }
 
 /* role */
 
@@ -356,9 +370,12 @@
   font-weight: 600;
   color: #0f172a;
   margin: 0;
-  white-space: nowrap;
+  /* Allow long titles to wrap to the next line, clamp to 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .doc-delete-btn {
@@ -714,4 +731,11 @@
   display: block;
   margin: 0 auto 8px auto;
   color: #0f172a;
+}
+
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  object-fit: cover;
 }

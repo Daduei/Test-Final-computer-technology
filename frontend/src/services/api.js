@@ -59,3 +59,8 @@ export const documentsAPI = {
   delete: (id) => apiCall(`/documents/${id}`, { method: 'DELETE' }),
   restore: (docId, revId) => apiCall(`/documents/${docId}/restore/${revId}`, { method: 'POST' })
 };
+
+export const usersAPI = {
+  // Admin-only endpoint: returns { success: true, users: [...] }
+  getAll: () => apiCall('/users')
+};
