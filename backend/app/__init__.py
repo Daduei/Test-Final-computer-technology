@@ -23,7 +23,7 @@ def create_app():
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
     app.config['JWT_HEADER_NAME'] = 'Authorization'
     app.config['JWT_HEADER_TYPE'] = 'Bearer'
-    app.config['JWT_ALGORITHM'] = 'HS256'
+    app.config['JWT_ALGORITHM'] = 'HS256' 
     
     db.init_app(app)
     jwt.init_app(app)
@@ -43,9 +43,11 @@ def create_app():
     
     from app.routes.auth import auth_bp
     from app.routes.documents import documents_bp
+    from app.routes.users import users_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(documents_bp, url_prefix='/api/documents')
+    app.register_blueprint(users_bp, url_prefix='/api/users')
     
     @app.route('/api/health')
     def health():

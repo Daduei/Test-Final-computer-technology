@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { documentsAPI } from '../services/api'
 import Profile from './Profile'
+import UserList from './UserList'
 import './WikiDashboard.css'
 
 const markdownToHtml = (md) => {
@@ -256,8 +257,10 @@ export default function WikiDashboard({ user, onLogout }) {
             Manage Doc
           </button>
 
-          {/* Manage User: để sau tuỳ bạn, giờ chỉ là tab trống */}
-          <button className="tab">Manage User</button>
+          {/* User List (admin only) */}
+          {user?.role === 'admin' && (
+            <button className="tab" onClick={() => setActiveView('userlist')}>User List</button>
+          )}
         </nav>
 
         <div className="header-right">
@@ -312,6 +315,10 @@ export default function WikiDashboard({ user, onLogout }) {
               }}
               onUpdateProfile={handleProfileUpdate}
             />
+          </section>
+        ) : activeView === 'userlist' ? (
+          <section className="wiki-card wiki-board">
+            <UserList currentUser={user} />
           </section>
         ) : (
           // ===== DASHBOARD VIEW =====
