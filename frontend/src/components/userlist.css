@@ -56,20 +56,25 @@
 }
 
 .user-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* four equal-width columns */
+  gap: 16px;
   align-items: center;
   padding: 8px 10px;
   background: #fbfbfc;
   border-radius: 8px;
   border: 1px solid #f1f5f9;
   margin-bottom: 6px;
+  width: 100%;
 }
 
 .user-left {
   display: flex;
   align-items: center;
   gap: 12px;
+  grid-column: 1; /* place avatar+name in first column */
+  min-width: 0;
+  padding-left: 6px; /* match header spacer padding for alignment */
 }
 
 .avatar-wrap {
@@ -102,37 +107,55 @@
   color: #fff;
 }
 
+.user-meta {
+  min-width: 0; /* allow truncation inside flex */
+}
 .user-meta .user-name {
   font-weight: 700;
   color: #0f172a;
   margin-bottom: 4px;
   font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .user-meta .user-username {
   font-size: 11px;
   color: #6b7280;
-}
-
-.user-columns {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 520px; /* wider so long emails can show */
-}
-
-.user-columns .user-email {
-  font-size: 14px;
-  color: #374151;
-  flex: 1 1 auto; /* stretch */
-  min-width: 300px; /* give more room before truncation */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.user-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* three equal columns for email/dob/role */
+  gap: 12px;
+  grid-column: 2 / span 3; /* occupy columns 2-4 */
+  align-items: center;
+  min-width: 0;
+}
+
+.user-columns .user-email {
+  font-size: 14px;
+  color: #374151;
+  flex: 1 1 0; /* stretch to fill */
+  min-width: 120px; /* allow wrapping/truncation on small screens */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.user-columns .user-dob {
+  text-align: center;
+  font-size: 13px;
+  color: #374151;
+}
+
 .user-columns .user-role {
-  flex: 0 0 auto; /* compact */
-  margin-left: 8px;
+  text-align: center;
+  justify-self: center; /* center the badge inside its grid cell */
 }
 
 .userlist-empty {
@@ -148,25 +171,33 @@
 }
 
 /* reuse role badges from Wiki styles but ensure local specificity */
-.userlist-card .user-role { font-size: 11px; padding: 4px 8px; border-radius: 999px; font-weight: 600; }
+.userlist-card .user-role { display: inline-block; font-size: 11px; padding: 4px 8px; border-radius: 999px; font-weight: 600; }
 .userlist-card .user-role-admin { border: 1px solid #fecaca; background: #fee2e2; color: #b91c1c; }
 .userlist-card .user-role-editor { border: 1px solid #bfdbfe; background: #dbeafe; color: #1d4ed8; }
 .userlist-card .user-role-viewer { border: 1px solid #e5e7eb; background: #f9fafb; color: #4b5563; }
 
 @media (max-width: 760px) {
-  .user-email { min-width: 120px; }
   .userlist-card { margin: 12px; padding: 12px; width: calc(100% - 24px); }
+  .user-row { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .user-left { width: 100%; }
+  .user-columns { width: 100%; display: flex; gap: 8px; }
+  .user-columns .user-email { min-width: 0; white-space: normal; text-align: left; }
+  .user-columns .user-dob, .user-columns .user-role { flex: 0 0 auto; text-align: left; }
+  .user-columns-header { display: none; }
 }
 
 .user-columns-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   align-items: center;
-  gap: 12px;
-  margin-left: auto; /* align to the right like rows */
-  min-width: 520px;
+  gap: 16px;
   padding: 6px 0;
   color: #6b7280;
   font-size: 12px;
+  width: 100%;
+  justify-items: center; /* center header labels within their grid cells */
 }
-.user-columns-header .col-email { flex: 1 1 auto; }
-.user-columns-header .col-role { flex: 0 0 auto; }
+.user-columns-header .col-spacer { grid-column: 1; text-align: left; padding-left: 6px; font-weight: 600; color: #374151; justify-self: start; }
+.user-columns-header .col-email { grid-column: 2; text-align: center; }
+.user-columns-header .col-dob { grid-column: 3; text-align: center; }
+.user-columns-header .col-role { grid-column: 4; text-align: center; }

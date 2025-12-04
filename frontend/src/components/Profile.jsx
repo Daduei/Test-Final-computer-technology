@@ -43,15 +43,56 @@ const Profile = ({
   const handleFileChange = (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
-
-    // Đọc file thành base64, chỉ preview trong Profile
-    const reader = new FileReader();
+    // Resize image client-side to limit base64 size (avoid localStorage quota)
+    const reader = new FileReader()
     reader.onload = () => {
-      const dataUrl = reader.result; // base64 string
-      setAvatar(dataUrl);
-      // KHÔNG báo lên Dashboard ở đây → header chưa đổi, chỉ đổi khi Save
-    };
-    reader.readAsDataURL(file);
+      const img = new Image()
+      img.onload = () => {
+        try {
+          const maxDim = 256 // max width/height in px
+          let { width, height } = img
+          let ratio = 1
+          if (width > height && width > maxDim) ratio = maxDim / width
+          if (height >= width && height > maxDim) ratio = maxDim / height
+          const canvas = document.createElement('canvas')
+          canvas.width = Math.round(width * ratio)
+          canvas.height = Math.round(height * ratio)
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          // toDataURL with jpeg to reduce size, fallback to png
+          let dataUrl
+          try {
+            dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+          } catch (err) {
+            dataUrl = canvas.toDataURL()
+          }
+          setAvatar(dataUrl)
+          // preview header immediately
+          if (onUpdateProfile) {
+            try {
+              onUpdateProfile({ ...user, avatarURL: dataUrl })
+            } catch (err) {}
+          }
+        } catch (err) {
+          // fallback: use original base64 if resize fails
+          const dataUrl = reader.result
+          setAvatar(dataUrl)
+          if (onUpdateProfile) {
+            try { onUpdateProfile({ ...user, avatarURL: dataUrl }) } catch (e) {}
+          }
+        }
+      }
+      img.onerror = () => {
+        // if image loading fails, fallback to raw reader result
+        const dataUrl = reader.result
+        setAvatar(dataUrl)
+        if (onUpdateProfile) {
+          try { onUpdateProfile({ ...user, avatarURL: dataUrl }) } catch (e) {}
+        }
+      }
+      img.src = reader.result
+    }
+    reader.readAsDataURL(file)
   };
 
   const handleStartEdit = () => {

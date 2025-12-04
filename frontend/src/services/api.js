@@ -20,8 +20,10 @@ const apiCall = async (endpoint, options = {}) => {
 };
 
 export const authAPI = {
-  register: async (name, email, password, role) => {
-    const data = await apiCall('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password, role }) });
+  register: async (name, email, password, role, dateOfBirth) => {
+    const payload = { name, email, password, role };
+    if (dateOfBirth) payload.dateOfBirth = dateOfBirth;
+    const data = await apiCall('/auth/register', { method: 'POST', body: JSON.stringify(payload) });
     try { console.log('[authAPI] register response', data) } catch (e) {}
     if (data && data.token) localStorage.setItem('token', data.token);
     // Normalize response: ensure it always has user, success fields
@@ -61,6 +63,9 @@ export const documentsAPI = {
 };
 
 export const usersAPI = {
-  // Admin-only endpoint: returns { success: true, users: [...] }
-  getAll: () => apiCall('/users')
+  getAll: () => apiCall('/users'),
+  getOne: (id) => apiCall(`/users/${id}`),
+  update: (id, data) => apiCall(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id) => apiCall(`/users/${id}`, { method: 'DELETE' }),
+  search: (query) => apiCall(`/users/search?q=${encodeURIComponent(query)}`)
 };

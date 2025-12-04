@@ -37,6 +37,7 @@ const UserRow = ({ u }) => {
 
       <div className="user-columns">
         <div className="user-email">{u.email || '—'}</div>
+        <div className="user-dob">{u.dateOfBirth ? new Date(u.dateOfBirth).toLocaleDateString() : '—'}</div>
         <div className={roleBadgeClass[u.role] || 'user-role'}>{u.role}</div>
       </div>
     </div>
@@ -160,6 +161,12 @@ export default function UserList({ currentUser }) {
 
       <div className="userlist-section">
         <h4>Admins</h4>
+        <div className="user-columns-header">
+          <div className="col-spacer">User name</div>
+          <div className="col-email">Email</div>
+          <div className="col-dob">Date of Birth</div>
+          <div className="col-role">Role</div>
+        </div>
         {loading ? (
           <div className="userlist-loading">Loading…</div>
         ) : adminsFiltered.length === 0 ? (
@@ -171,6 +178,12 @@ export default function UserList({ currentUser }) {
 
       <div className="userlist-section">
         <h4>Editors</h4>
+        <div className="user-columns-header">
+          <div className="col-spacer">User name</div>
+          <div className="col-email">Email</div>
+          <div className="col-dob">Date of Birth</div>
+          <div className="col-role">Role</div>
+        </div>
         {loading ? (
           <div className="userlist-loading">Loading…</div>
         ) : editorsFiltered.length === 0 ? (
@@ -182,6 +195,12 @@ export default function UserList({ currentUser }) {
 
       <div className="userlist-section">
         <h4>Viewers</h4>
+        <div className="user-columns-header">
+          <div className="col-spacer">User name</div>
+          <div className="col-email">Email</div>
+          <div className="col-dob">Date of Birth</div>
+          <div className="col-role">Role</div>
+        </div>
         {loading ? (
           <div className="userlist-loading">Loading…</div>
         ) : viewersFiltered.length === 0 ? (

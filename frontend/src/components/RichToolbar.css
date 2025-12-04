@@ -1,0 +1,83 @@
+.rich-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.rich-toolbar button {
+  border: 1px solid transparent;
+  background: #ffffff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.rich-toolbar button:hover {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.rich-toolbar select,
+.rich-toolbar input[type="color"] {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #0f172a;
+  height: 34px;
+  appearance: none;
+}
+
+.rich-toolbar select:focus,
+.rich-toolbar input[type="color"]:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.12);
+}
+
+.rich-toolbar input[type="color"] {
+  padding: 2px;
+  width: 36px;
+}
+
+/* size control styling */
+.rt-size-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rt-size-btn {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 32px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.rt-size-btn:hover { background: #f0f9ff; border-color: #bae6fd }
+.rt-size-input {
+  width: 54px;
+  border: 1px solid #e5e7eb;
+  height: 34px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: center;
+}
+.rt-font-select {
+  min-width: 120px;
+}
+
+/* visual vertical separator between toolbar groups */
+.rt-separator {
+  width: 1px;
+  background: rgba(15,23,42,0.06);
+  height: 28px;
+  align-self: center;
+  margin: 0 8px;
+  border-radius: 1px;
+}
