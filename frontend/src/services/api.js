@@ -61,6 +61,9 @@ export const documentsAPI = {
 };
 
 export const usersAPI = {
-  // Admin-only endpoint: returns { success: true, users: [...] }
-  getAll: () => apiCall('/users')
+  getAll: () => apiCall('/users'),
+  getOne: (id) => apiCall(`/users/${id}`),
+  update: (id, data) => apiCall(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id) => apiCall(`/users/${id}`, { method: 'DELETE' }),
+  search: (query) => apiCall(`/users/search?q=${encodeURIComponent(query)}`)
 };

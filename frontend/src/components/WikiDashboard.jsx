@@ -1,16 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import {
-  Search,
-  Plus,
-  Edit2,
-  Save,
-  X,
-  Clock,
-  Trash2,
-  FileText,
-  LogOut,
-  User,
-} from 'lucide-react'
+import {Search, Plus, Edit2, Save, X, Clock, Trash2, FileText, LogOut, User, } from 'lucide-react'
 import { documentsAPI } from '../services/api'
 import Profile from './Profile'
 import UserList from './UserList'
