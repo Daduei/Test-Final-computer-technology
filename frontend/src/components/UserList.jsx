@@ -37,7 +37,7 @@ const UserRow = ({ u }) => {
 
       <div className="user-columns">
         <div className="user-email">{u.email || '—'}</div>
-        <div className="user-dob">{u.dateOfBirth ? new Date(u.dateOfBirth).toLocaleDateString() : '—'}</div>
+        <div className="user-dob">{u.dateOfBirth ? new Date(u.date_of_birth).toLocaleDateString() : '—'}</div>
         <div className={roleBadgeClass[u.role] || 'user-role'}>{u.role}</div>
       </div>
     </div>
