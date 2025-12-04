@@ -10,6 +10,7 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.Enum('admin', 'editor', 'viewer'), default='viewer', nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    date_of_birth = db.Column(db.Date, nullable=True)
     
     documents = db.relationship('Document', backref='owner', lazy=True, foreign_keys='Document.owner_id')
     
@@ -28,15 +29,17 @@ class User(db.Model):
             'name': self.name,
             'email': self.email,
             'role': self.role,
-            'createdAt': self.created_at.isoformat() if self.created_at else None
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'dateOfBirth': self.date_of_birth.isoformat() if self.date_of_birth else None
         }
     
     @staticmethod
-    def create_user(name, email, password, role='viewer'):
+    def create_user(name, email, password, role='viewer', date_of_birth=None):
         user = User(
             name=name.strip(),
             email=email.lower().strip(),
-            role=role if role in ['admin', 'editor', 'viewer'] else 'viewer'
+            role=role if role in ['admin', 'editor', 'viewer'] else 'viewer',
+            date_of_birth=date_of_birth
         )
         user.set_password(password)
         db.session.add(user)

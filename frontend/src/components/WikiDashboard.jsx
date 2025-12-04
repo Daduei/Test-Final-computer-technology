@@ -15,7 +15,7 @@ import { documentsAPI } from '../services/api'
 import Profile from './Profile'
 import UserList from './UserList'
 import RichToolbar from './RichToolbar'
-import './WikiDashboard.css'
+import './Wikidashboard.css'
 
 const markdownToHtml = (md) => {
   if (!md) return ''
@@ -66,10 +66,15 @@ export default function WikiDashboard({ user, onLogout }) {
     const email = user?.email
     if (!email) return
     const key = `name:${email}`
-    if (displayName) {
-      window.localStorage.setItem(key, displayName)
-    } else {
-      window.localStorage.removeItem(key)
+    try {
+      if (displayName) {
+        window.localStorage.setItem(key, displayName)
+      } else {
+        window.localStorage.removeItem(key)
+      }
+    } catch (err) {
+      // localStorage can throw (quota, private mode). Don't let it break the app.
+      console.warn('Failed to save displayName to localStorage', err)
     }
   }, [displayName, user?.email])
 
@@ -78,10 +83,15 @@ export default function WikiDashboard({ user, onLogout }) {
     const email = user?.email
     if (!email) return
     const key = `avatar:${email}`
-    if (avatarUrl) {
-      window.localStorage.setItem(key, avatarUrl)
-    } else {
-      window.localStorage.removeItem(key)
+    try {
+      if (avatarUrl) {
+        window.localStorage.setItem(key, avatarUrl)
+      } else {
+        window.localStorage.removeItem(key)
+      }
+    } catch (err) {
+      // avoid crashing app on quota exceed or restricted storage
+      console.warn('Failed to save avatar to localStorage', err)
     }
   }, [avatarUrl, user?.email])
 
@@ -357,6 +367,7 @@ export default function WikiDashboard({ user, onLogout }) {
 
   // Nhận dữ liệu từ Profile khi bấm Save
   const handleProfileUpdate = (updatedUser) => {
+    console.log('handleProfileUpdate called', updatedUser)
     if (updatedUser.name) setDisplayName(updatedUser.name)
     if (updatedUser.avatarURL) setAvatarUrl(updatedUser.avatarURL)
   }

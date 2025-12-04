@@ -14,6 +14,15 @@ def register():
         email = data.get('email', '').strip().lower()
         password = data.get('password', '')
         role = data.get('role', 'viewer')
+        dob_raw = data.get('dateOfBirth') or data.get('date_of_birth')
+        dob = None
+        if dob_raw:
+            try:
+                # Expecting yyyy-mm-dd from HTML date input
+                from datetime import datetime
+                dob = datetime.strptime(dob_raw, '%Y-%m-%d').date()
+            except Exception:
+                return jsonify({'success': False, 'message': 'Invalid dateOfBirth format, expected YYYY-MM-DD'}), 400
         
         if not name or len(name) < 2:
             return jsonify({'success': False, 'message': 'Name must be at least 2 characters'}), 400
@@ -27,7 +36,7 @@ def register():
         if User.find_by_email(email):
             return jsonify({'success': False, 'message': 'User with this email already exists'}), 400
         
-        user = User.create_user(name, email, password, role)
+        user = User.create_user(name, email, password, role, date_of_birth=dob)
         
         token = create_access_token(identity=str(user.id))
         
