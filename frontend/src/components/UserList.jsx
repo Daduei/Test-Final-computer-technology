@@ -12,7 +12,7 @@ const roleBadgeClass = {
 const UserRow = ({ u }) => {
   const avatar = u.avatarURL || u.avatarUrl || u.avatar || '';
   const [imgOk, setImgOk] = useState(false);
-  const initial = u.name ? u.name.trim()[0].toUpperCase() : '?';
+  const initial = u.name ? u.name.trim()[0] : '?';
 
   return (
     <div className="user-row">
@@ -37,7 +37,7 @@ const UserRow = ({ u }) => {
 
       <div className="user-columns">
         <div className="user-email">{u.email || '—'}</div>
-        <div className="user-dob">{u.dateOfBirth ? new Date(u.date_of_birth).toLocaleDateString() : '—'}</div>
+        <div className="user-dob">{u.dateOfBirth ? new Date(u.dateOfBirth).toLocaleDateString() : '—'}</div>
         <div className={roleBadgeClass[u.role] || 'user-role'}>{u.role}</div>
       </div>
     </div>
@@ -55,16 +55,8 @@ export default function UserList({ currentUser }) {
       setLoading(true);
       setError(null);
       try {
-        console.log('[UserList] Calling usersAPI.getAll()...');
         const res = await usersAPI.getAll();
-        console.log('[UserList] Response:', res);
-        
-        if (!res || !res.success) {
-          throw new Error(res?.message || 'Failed to load users');
-        }
-        
-        const fetched = Array.isArray(res.users) ? res.users : [];
-        console.log('[UserList] Fetched users:', fetched);
+        const fetched = (res && Array.isArray(res.users)) ? res.users : [];
 
         const getLocalAvatar = (email) => {
           try {
@@ -77,7 +69,8 @@ export default function UserList({ currentUser }) {
           }
         };
 
-        // Attach any local avatars (from localStorage) to fetched users
+        // Attach any local avatars (from localStorage) to fetched users so
+        // local edits show even if backend doesn't have an avatar URL.
         fetched.forEach((u) => {
           if (!u.avatarURL && u.email) {
             const local = getLocalAvatar(u.email);
@@ -85,11 +78,9 @@ export default function UserList({ currentUser }) {
           }
         });
 
-        // Ensure current user is in the list if admin
         if (currentUser && currentUser.email) {
           const existsIndex = fetched.findIndex((u) => (u.email || '').toLowerCase() === currentUser.email.toLowerCase());
           const localAvatar = currentUser.avatarURL || getLocalAvatar(currentUser.email);
-          
           if (existsIndex === -1) {
             fetched.unshift({
               id: currentUser.id || 'me',
@@ -104,34 +95,19 @@ export default function UserList({ currentUser }) {
         }
 
         setUsers(fetched);
-        setError(null);
       } catch (e) {
-        console.error('[UserList] Error loading users:', e);
-        
-        // Show meaningful error message
-        setError(e.message || 'Failed to load users from server. Showing local account only.');
-        
-        // Fallback: show only current user
+        // On error: do not show sample users. Instead show empty list but add
+        // currentUser if present so the admin sees their own account.
+        setError('Failed to load users from server. Showing local account only.');
         const fallback = [];
         try {
           if (currentUser && currentUser.email) {
             const avatarLocal = window.localStorage.getItem(`avatar:${currentUser.email}`) || currentUser.avatarURL || undefined;
-            fallback.push({ 
-              id: currentUser.id || 'me', 
-              name: currentUser.name, 
-              email: currentUser.email, 
-              role: currentUser.role || 'admin', 
-              avatarURL: avatarLocal 
-            });
+            fallback.push({ id: currentUser.id || 'me', name: currentUser.name, email: currentUser.email, role: currentUser.role || 'admin', avatarURL: avatarLocal });
           }
         } catch (ignore) {
           if (currentUser && currentUser.email) {
-            fallback.push({ 
-              id: currentUser.id || 'me', 
-              name: currentUser.name, 
-              email: currentUser.email, 
-              role: currentUser.role || 'admin' 
-            });
+            fallback.push({ id: currentUser.id || 'me', name: currentUser.name, email: currentUser.email, role: currentUser.role || 'admin' });
           }
         }
         setUsers(fallback);
@@ -154,13 +130,11 @@ export default function UserList({ currentUser }) {
   const editors = users.filter((u) => u.role === 'editor');
   const viewers = users.filter((u) => u.role === 'viewer');
 
-  // Apply search filter
+  // apply search filter
   const matches = (u) => {
     if (!query) return true;
     const q = query.toLowerCase();
-    return (u.name || '').toLowerCase().includes(q) || 
-           (u.email || '').toLowerCase().includes(q) || 
-           (u.role || '').toLowerCase().includes(q);
+    return (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q) || (u.role || '').toLowerCase().includes(q);
   };
 
   const adminsFiltered = admins.filter(matches);
