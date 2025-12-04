@@ -9,6 +9,7 @@ export default function RegisterPage({ onSwitch, onLogin }) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [role, setRole] = useState('viewer')
+  const [dateOfBirth, setDateOfBirth] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -25,7 +26,7 @@ export default function RegisterPage({ onSwitch, onLogin }) {
     if (password.length < 6) return setError('Password must be at least 6 characters')
     setLoading(true)
     try {
-      const res = await authAPI.register(name.trim(), email, password, role)
+      const res = await authAPI.register(name.trim(), email, password, role, dateOfBirth)
       if (res.success) {
         // After successful registration, switch back to login view
         // User will need to log in with their new credentials
@@ -79,6 +80,17 @@ export default function RegisterPage({ onSwitch, onLogin }) {
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="123@example.com"
+              className="form-input"
+            />
+          </div>
+
+          {/* Date of Birth Field */}
+          <div className="form-group">
+            <label>Date of Birth</label>
+            <input
+              type="date"
+              value={dateOfBirth}
+              onChange={e => setDateOfBirth(e.target.value)}
               className="form-input"
             />
           </div>
