@@ -590,19 +590,6 @@
 }
 
 /* Rich editor toolbar and editable area */
-.rich-toolbar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.rich-toolbar button {
-  border: 1px solid transparent;
-  background: #ffffff;
-  padding: 6px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.rich-toolbar button:hover { background: #f0f9ff; border-color: #bae6fd }
 .rich-edit {
   /* allow contenteditable to grow rather than scroll internally */
   min-height: 120px;
@@ -618,11 +605,43 @@
   transition: height 0.08s ease;
 }
 
+/* Floating small label that shows current font near the caret */
+.rt-float {
+  position: absolute;
+  z-index: 1200;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #0f172a;
+  white-space: nowrap;
+  transform: translateY(-6px);
+}
+
+
+/* toolbar styling moved to `RichToolbar.css` to keep dashboard file smaller */
+
 /* Ensure description/editor text uses same system font as inputs */
 .rich-edit,
 .edit-view,
 .doc-desc {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Normalize rendered content inside the view/editor: force consistent
+   font-size, line-height and remove unexpected top margins from headings */
+.edit-view, .edit-view * {
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.edit-view p { margin: 0 0 0.75em 0; }
+.edit-view h1, .edit-view h2, .edit-view h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5em 0;
 }
 
 /* When the editor is empty, show a subtle placeholder and a blue border */
@@ -724,7 +743,12 @@
 /* right: history */
 
 .edit-history {
-  width: 260px;
+  /* Prevent the history panel from collapsing: use a fixed-flex width
+     so it keeps its space while allowing the main editor to grow. */
+  flex: 0 0 320px; /* do not grow, do not shrink, base width 320px */
+  width: 320px; /* keep explicit width for older browsers */
+  min-width: 280px; /* safety: don't let it become too narrow */
+  max-width: 380px; /* optional: cap the width so it doesn't dominate */
   display: flex;
   flex-direction: column;
   /* padding */
@@ -762,6 +786,25 @@
   flex: 1;
   margin-top: 8px;
   overflow-y: auto;
+}
+
+/* Responsive: on narrow viewports allow the history panel to collapse below
+   the editor so it doesn't squeeze content — this keeps the main editor
+   usable on small screens. */
+@media (max-width: 1000px) {
+  .wiki-edit-section {
+    flex-direction: column;
+  }
+  .edit-left {
+    border-right: none;
+    padding-right: 0;
+  }
+  .edit-history {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
 }
 
 .history-list::-webkit-scrollbar {
