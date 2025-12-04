@@ -17,6 +17,18 @@ const markdownToHtml = (md) => {
     .replace(/\n/g, '<br/>')
 }
 
+// Strip HTML and markdown formatting to get plain text
+const getPlainText = (content) => {
+  if (!content) return ''
+  return content
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/^#+\s/gm, '') // Remove markdown headers
+    .replace(/\*\*(.+?)\*\*/g, '$1') // Remove bold formatting
+    .replace(/\*(.+?)\*/g, '$1') // Remove italic formatting
+    .replace(/\n+/g, ' ') // Replace newlines with space
+    .trim()
+}
+
 export default function WikiDashboard({ user, onLogout }) {
   const [documents, setDocuments] = useState([])
   const [selectedDoc, setSelectedDoc] = useState(null)
@@ -513,7 +525,7 @@ export default function WikiDashboard({ user, onLogout }) {
                         <div className="doc-desc-block">
                           <div className="doc-label">Description</div>
                           <p className="doc-desc">
-                            {(d.content || '').slice(0, 90) ||
+                            {getPlainText(d.content).slice(0, 90) ||
                               'No description yet.'}
                           </p>
                         </div>
